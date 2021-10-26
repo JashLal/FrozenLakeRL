@@ -60,13 +60,8 @@ def policy_evaluation(P, nS, nA, policy, gamma=0.9, tol=1e-3):
 		new_value_function = np.zeros(nS)
 		for i in range(nS):
 			# get the model for the current state and action
-			probability, next_state, reward, terminal = P[i][policy[i]][0]
-			new_value_function[i] = reward
-			if not terminal:
-				# compute discounted future reward
-				# probability * value_function[next_state] is the value of all possible states
-				# CURRENTLY DETERMINISTIC ==> only one possible state to transition to
-				new_value_function[i] += gamma * probability * value_function[next_state]
+			probability, next_state, reward, _ = P[i][policy[i]][0]
+			new_value_function[i] = reward + gamma * probability * value_function[next_state]
 		if np.amax(np.absolute(new_value_function - value_function)) < tol:
 			return new_value_function
 		value_function = new_value_function
@@ -94,16 +89,14 @@ def policy_improvement(P, nS, nA, value_from_policy, policy, gamma=0.9):
 	"""
 	############################
 	# YOUR IMPLEMENTATION HERE #
-	Q = np.ndarray((nS, nA), dtype='int')
+	Q = np.zeros((nS, nA), dtype='int')
 	# calculate state-action values for the policy
 	for state in range(nS):
 		for action in range(nA):
-			probability, next_state, reward, terminal = P[state][action][0]
-			Q[state][action] = reward
-			if not terminal:
-				# compute discounted future reward based on policy
-				Q[state][action] += probability * next_state * value_from_policy[next_state]
+			probability, next_state, reward, _ = P[state][action][0]
+			Q[state][action] = reward + gamma * probability * value_from_policy[next_state]
 	############################
+	print(Q)
 	return np.argmax(Q, axis=1)
 
 def policy_iteration(P, nS, nA, gamma=0.9, tol=10e-3):
@@ -199,8 +192,14 @@ if __name__ == "__main__":
 	# comment/uncomment these lines to switch between deterministic/stochastic environments
 	env = gym.make("Deterministic-4x4-FrozenLake-v0")
 	# env = gym.make("Stochastic-4x4-FrozenLake-v0")
+	env.reset()
+	env.render()
 	policy = (np.random.rand(env.nS) * 4).astype(int)
+	print("Policy")
+	print(policy)
 	value = policy_evaluation(env.P, env.nS, env.nA, policy)
+	print("Value")
+	print(value)
 	print(policy_improvement(env.P, env.nS, env.nA, value, policy))
 	# print("\n" + "-"*25 + "\nBeginning Policy Iteration\n" + "-"*25)
 
